@@ -1,52 +1,73 @@
 #!/bin/bash
+
 function hstart(){
+    if [ -z "$HAMSTER_CMD" ]; then
+       echo 'Environment variable "$HAMSTER_CMD" is not set.'
+       return 1
+    fi
     # Provides a windows to select the task for hamster
-    current_task=$(hcurrent) 
-    title="Current task: \"$current_task\". Select a task to work on."
+    current_task=$($HAMSTER_CMD current) 
+    title="Hamster wrapper"
+    text="Current task: \"$current_task\".\nSelect a new task to work on:"
 
     if [ -z "$1" ]; then
         IFS=$'\n'
-        items=($(hamster list | grep "|" | awk -F"|" 'NR>1 {print $5 "\n" $4}' | tac))
-        opt=$(zenity --list --title=$title --separator='|' --column='task' --width=600 --height=450 --column='category' ${items})
+        items=($($HAMSTER_CMD list | grep "|" | awk -F"|" 'NR>1 {print $5 "\n" $4}' | tac))
+        opt=$(zenity --list --title=title --separator='|' --column='task' --width=600 --height=450 --text="$text" --column='category' ${items})
         unset IFS
 
     else
         IFS=$'\n'
-        items=($(hamster list | grep -i $1 | tac | grep "|" | awk -F"|" '{print $4}'))
+        items=($($HAMSTER_CMD list | grep -i $1 | tac | grep "|" | awk -F"|" '{print $4}'))
         # convert tasks to array 
         #IFS=$'\n' tasks_arr=($tasks)
-        opt=$(zenity --list --title=$title --separator='|' --width=600 --height=450  --column='Task' $items)
+        opt=$(zenity --list --title=$title --separator='|' --width=600 --height=450  --column='Task' --text="$text" $items)
 
         unset IFS
     fi
     if [ ! -z "$opt" ]; then
         value=$(echo $opt | cut -d'|' -f 1)
-        hamster start $value
+        $HAMSTER_CMD start $value
         echo "Task \"$value\" started."
     fi
 }
 
 function hnew(){
-
-  current_task=$(hcurrent) 
-  title="Current task: \"$current_task\". New task to work on."
+  if [ -z "$HAMSTER_CMD" ]; then
+     echo 'Environment variable "$HAMSTER_CMD" is not set.'
+     return 1
+  fi
+  current_task=$($HAMSTER_CMD current) 
+  text="Current task: \"$current_task\".\nNew task to work on:"
   if [ -z "$1" ]; then
-    value=$(zenity --entry --title=$title --text="Task name")
+    value=$(zenity --entry --title="Hamster wrapper" --text="$text" --width=600)
   else
     value="$@"
   fi
   if [ ! -z "$value" ]; then
-      hamster start $value
+      $HAMSTER_CMD start $value
       echo "Task \"$value\" started."
  fi
 }
 
 
-function dont_be_lazy_warning() {
+function dont_be_lazy_warning(){
     zenity --warning --text="Don't be lazy and select a task!!!"
     hnew
 }
 
-alias hcurrent="hamster current"
-alias hlist="hamster list"
+function hcurrent(){
+  if [ -z "$HAMSTER_CMD" ]; then
+     echo 'Environment variable "$HAMSTER_CMD" is not set.'
+     return 1
+  fi
+  $HAMSTER_CMD current
+}
+function hlist(){
+  if [ -z "$HAMSTER_CMD" ]; then
+     echo 'Environment variable "$HAMSTER_CMD" is not set.'
+     return 1
+  fi
+  $HAMSTER_CMD list
+}
 

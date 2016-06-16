@@ -11,7 +11,12 @@ PREFERED_CATEGORY='Day-to-day'
 
 # Internal parameters
 TFORMAT='%Y-%m-%d %H:%M:%S'
-HAMSTER_CMD="hamster"
+
+#HAMSTER_CMD="hamster"
+if [ -z "$HAMSTER_CMD" ]; then
+    echo 'Environment variable "$HAMSTER_CMD" is not set.'
+    exit 1
+fi
 
 # Sequence to execute when timeout triggers.
 task_selector() {
