@@ -1,0 +1,52 @@
+#!/bin/bash
+function hstart(){
+    # Provides a windows to select the task for hamster
+    current_task=$(hcurrent) 
+    title="Current task: \"$current_task\". Select a task to work on."
+
+    if [ -z "$1" ]; then
+        IFS=$'\n'
+        items=($(hamster list | grep "|" | awk -F"|" 'NR>1 {print $5 "\n" $4}' | tac))
+        opt=$(zenity --list --title=$title --separator='|' --column='task' --width=600 --height=450 --column='category' ${items})
+        unset IFS
+
+    else
+        IFS=$'\n'
+        items=($(hamster list | grep -i $1 | tac | grep "|" | awk -F"|" '{print $4}'))
+        # convert tasks to array 
+        #IFS=$'\n' tasks_arr=($tasks)
+        opt=$(zenity --list --title=$title --separator='|' --width=600 --height=450  --column='Task' $items)
+
+        unset IFS
+    fi
+    if [ ! -z "$opt" ]; then
+        value=$(echo $opt | cut -d'|' -f 1)
+        hamster start $value
+        echo "Task \"$value\" started."
+    fi
+}
+
+function hnew(){
+
+  current_task=$(hcurrent) 
+  title="Current task: \"$current_task\". New task to work on."
+  if [ -z "$1" ]; then
+    value=$(zenity --entry --title=$title --text="Task name")
+  else
+    value="$@"
+  fi
+  if [ ! -z "$value" ]; then
+      hamster start $value
+      echo "Task \"$value\" started."
+ fi
+}
+
+
+function dont_be_lazy_warning() {
+    zenity --warning --text="Don't be lazy and select a task!!!"
+    hnew
+}
+
+alias hcurrent="hamster current"
+alias hlist="hamster list"
+
